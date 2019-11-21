@@ -15,57 +15,58 @@
  */
 
 package com.example.android.trackmysleepquality
-//
-//import androidx.room.Room
-//import androidx.test.ext.junit.runners.AndroidJUnit4
-//import androidx.test.platform.app.InstrumentationRegistry
-//import com.example.android.trackmysleepquality.database.SleepDatabase
-//import com.example.android.trackmysleepquality.database.SleepDatabaseDao
-//import com.example.android.trackmysleepquality.database.SleepNight
-//import org.junit.Assert.assertEquals
-//import org.junit.After
-//import org.junit.Before
-//import org.junit.Test
-//import org.junit.runner.RunWith
-//import java.io.IOException
-//
-//
-///**
-// * This is not meant to be a full set of tests. For simplicity, most of your samples do not
-// * include tests. However, when building the Room, it is helpful to make sure it works before
-// * adding the UI.
-// */
-//
-//@RunWith(AndroidJUnit4::class)
-//class SleepDatabaseTest {
-//
-//    private lateinit var sleepDao: SleepDatabaseDao
-//    private lateinit var db: SleepDatabase
-//
-//    @Before
-//    fun createDb() {
-//        val context = InstrumentationRegistry.getInstrumentation().targetContext
-//        // Using an in-memory database because the information stored here disappears when the
-//        // process is killed.
-//        db = Room.inMemoryDatabaseBuilder(context, SleepDatabase::class.java)
-//                // Allowing main thread queries, just for testing.
-//                .allowMainThreadQueries()
-//                .build()
-//        sleepDao = db.sleepDatabaseDao
-//    }
-//
-//    @After
-//    @Throws(IOException::class)
-//    fun closeDb() {
-//        db.close()
-//    }
-//
-//    @Test
-//    @Throws(Exception::class)
-//    fun insertAndGetNight() {
-//        val night = SleepNight()
-//        sleepDao.insert(night)
-//        val tonight = sleepDao.getTonight()
-//        assertEquals(tonight?.sleepQuality, -1)
-//    }
-//}
+
+import androidx.room.Room
+import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.test.platform.app.InstrumentationRegistry
+import com.example.android.trackmysleepquality.database.SleepDatabase
+import com.example.android.trackmysleepquality.database.SleepDatabaseDao
+import com.example.android.trackmysleepquality.database.SleepNight
+import org.junit.Assert.assertEquals
+import org.junit.After
+import org.junit.Before
+import org.junit.Test
+import org.junit.runner.RunWith
+import java.io.IOException
+
+
+/**
+ * This is not meant to be a full set of tests. For simplicity, most of your samples do not
+ * include tests. However, when building the Room, it is helpful to make sure it works before
+ * adding the UI.
+ */
+
+@RunWith(AndroidJUnit4::class) // Testleri kuran ve yöneten dependency
+class SleepDatabaseTest {
+
+    private lateinit var sleepDao: SleepDatabaseDao
+    private lateinit var db: SleepDatabase
+
+    // 1. Adım olarak DataBase oluşturuluyor.
+    @Before // İlk yapılması gereken işlem
+    fun createDb() {
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        // Using an in-memory database because the information stored here disappears when the
+        // process is killed. Bellek üzerinde oluşturma sağlanır. İşlem bitince kaldırılır.
+        db = Room.inMemoryDatabaseBuilder(context, SleepDatabase::class.java)
+                // Allowing main thread queries, just for testing.
+                .allowMainThreadQueries() // Ana-İş parçacağı üzerinde işlem yapılmasını sağlar. Test e özgüdür.
+                .build()
+        sleepDao = db.sleepDatabaseDao
+    }
+
+    @After // 3. Adım Veritabanı kapatılır.
+    @Throws(IOException::class)
+    fun closeDb() {
+        db.close()
+    }
+
+    @Test // 2. Adım Test Yapılır.
+    @Throws(Exception::class)
+    fun insertAndGetNight() {
+        val night = SleepNight() // Dummy Veri
+        sleepDao.insert(night) // Dummy insert
+        val tonight = sleepDao.getTonight() // En son eklenen dummy veri
+        assertEquals(tonight?.sleepQuality, -1) // eşit mi değil mi
+    }
+}
