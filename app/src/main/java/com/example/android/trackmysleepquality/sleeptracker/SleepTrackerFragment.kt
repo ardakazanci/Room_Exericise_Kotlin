@@ -22,7 +22,10 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.ViewModelProviders
 import com.example.android.trackmysleepquality.R
+import com.example.android.trackmysleepquality.database.SleepDatabase
+import com.example.android.trackmysleepquality.database.SleepDatabaseDao
 import com.example.android.trackmysleepquality.databinding.FragmentSleepTrackerBinding
 
 /**
@@ -40,9 +43,31 @@ class SleepTrackerFragment : Fragment() {
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
                               savedInstanceState: Bundle?): View? {
 
-        // Get a reference to the binding object and inflate the fragment views.
+        // Fragment görünümü ile Fragment Class ' ını Binding olarak bağlıyoruz.
         val binding: FragmentSleepTrackerBinding = DataBindingUtil.inflate(
                 inflater, R.layout.fragment_sleep_tracker, container, false)
+        // Boş olmaması için requireNotNull olması gerekmekte. İleride application ı kullanacağız.
+        val application = requireNotNull(this.activity).application
+        // Veri Kaynağını alıyoruz. Verilere ulaşmak içinde dao kullancağız.
+        val dataSource = SleepDatabase.getInstance(application).sleepDatabaseDao
+        // Fabrika Tasarım Prensibiyle ViewModel oluştuyoruz.
+        val viewModelFactory = SleepTrackerViewModelFactory(dataSource, application)
+        // Oluşturulan ViewModel ' ı Fragment ' ımıza bağlıyoruz.
+        val sleepTrackerViewModel = ViewModelProviders.of(this, viewModelFactory).get(SleepTrackerViewModel::class.java)
+
+
+        /**
+         * Pratik olarak parametreli bir viewModel oluştururken fabric kullanmak iyi pratiktir.
+         */
+
+        // ViewModel ' ın bağlı olduğu yaşamdöngüsü bu fragment a bağlı olacak
+        binding.setLifecycleOwner(this)
+        // Oluşturduğumuz viewModel ' ı binding olarak bağlıyoruz. Bu şekilde fragment görünümünde yer alan view
+        // elemanları üzerinde yapılacak işlemler bu viewModel üzerinden sağlanacak, uzun vadede verilerin bağlanması, test edilmesi konusunda
+        // pratik ve kolaylık sağlar. Örneğin. Fragment içerisinde yer alan 2 adet textview ' e verilerin girilip girilmediğini ViewModel da business işi yapıp
+        // onCreateView içerisinde sunabiliriz. 
+        binding.sleepTrackerViewModel = sleepTrackerViewModel
+
 
         return binding.root
     }

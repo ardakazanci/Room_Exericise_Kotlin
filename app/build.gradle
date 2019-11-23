@@ -76,5 +76,9 @@ dependencies {
     testİmplementation 'junit:junit:4.12'
     androidTestİmplementation 'androidx.test.ext:junit:1.1.1'
     androidTestİmplementation 'androidx.test.espresso:espresso-core:3.2.0'
+
+    // Kotlin Coroutines Dependency
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.0.0"
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.0.0"
 }
 

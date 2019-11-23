@@ -57,9 +57,9 @@ interface SleepDatabaseDao{
 
     /**
      * Tüm bilgileri almak için kullanılan bir sorgudur.
-     * LiveData olmasının sebebi, değişim olacağı için gözlemlenebilir olmaılıdır.
+     * LiveData olmasının sebebi, değişim olacağı için gözlemlenebilir olmalıdır.
      * List olmasının sebebi , birden fazla SleepNight objesi olacaktır.
-     * LiveData olmasının diğer bir avantajı, Daha sonra değişimi gözlemlenir sadece.
+     * LiveData olmasının diğer bir avantajı, Daha sonra değişimi gözlemlenir.
      */
     @Query("SELECT * FROM daily_sleep_quality_table ORDER BY nightId DESC")
     fun getAllNights(): LiveData<List<SleepNight>>

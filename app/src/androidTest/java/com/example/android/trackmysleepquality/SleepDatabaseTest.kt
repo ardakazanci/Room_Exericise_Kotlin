@@ -53,7 +53,7 @@ class SleepDatabaseTest {
                 // Allowing main thread queries, just for testing.
                 .allowMainThreadQueries() // Ana-İş parçacağı üzerinde işlem yapılmasını sağlar. Test e özgüdür.
                 .build()
-        sleepDao = db.sleepDatabaseDao
+        sleepDao = db.sleepDatabaseDao // Database Sınıfı ile iletişime geçebilir.
     }
 
     @After // 3. Adım Veritabanı kapatılır.
