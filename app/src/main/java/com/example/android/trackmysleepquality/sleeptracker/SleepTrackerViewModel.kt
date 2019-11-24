@@ -18,6 +18,7 @@ package com.example.android.trackmysleepquality.sleeptracker
 
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.Transformations
 import com.example.android.trackmysleepquality.database.SleepDatabaseDao
@@ -26,46 +27,55 @@ import com.example.android.trackmysleepquality.formatNights
 import kotlinx.coroutines.*
 
 /**
- * ViewModel for SleepTrackerFragment.
- * ViewModel yerine AndroidViewModel kullandık. Bu yüzden application geçtik.
- * Bunu kullanan bileşen, sleep dao aracılığıyla veritabanı işlemi gerçekleşecektir.
+ * @param database : SleepDatabaseDao -> ViewModel içerisinde CRUD yapılacak.
+ * @param application : AndroidViewModel ' dan kalıttık.
  */
 class SleepTrackerViewModel(
         val database: SleepDatabaseDao,
         application: Application) : AndroidViewModel(application) {
+
+
+    private val _navigateToSleepQuality = MutableLiveData<SleepNight>()
+    val navigateToSleepQuality: LiveData<SleepNight>
+        get() = _navigateToSleepQuality
+
+    fun doNavigating() {
+        _navigateToSleepQuality.value = null
+    }
+
+    /**
+     * 1. Adm
+     * Coroutine ' nin yapacağı işi yönetebilmek adına oluşturduk.
+     * Çünkü Koroinin bir işi vardır ve bu iş buradan yönetilecek.
+     * */
+    private var viewModelJob = Job()
+
+    // İlgili koroin nerede çalışacak ViewModel ' da çalışacağı için ViewModel ' da UI ' a bağlı.
+    // Ek olarak Kapsam olarak Activity-Fragment ' ın yaşam döngüsü sonlandığında dahi çalışacaktır.
+    // Ek olarak sonuç olarak alınan veriler UI Thread üzerinde işlenecektir.
+    private val uiScope = CoroutineScope(Dispatchers.Main + viewModelJob)
+
+    // Dao içerisinde LiveData olarak return aldığım için coroutine e gerek yoktur.
+    private val nights = database.getAllNights()
+
+    // Transformation kullanmamızın sebebi, tarihler üzerinde değişim sağlıyoruz.
+    val nightsString = Transformations.map(nights) { nights ->
+        formatNights(nights, application.resources)
+    }
+
+    /**
+     * Logic şu şekilde işler. Kullanıcı start düğmesine tıkladığında
+     * SleepNight nesnesi oluşturulur daha sonra stop düğmesi gözlemlenir  tıklanırsa
+     * Bu nesnenin ilgili SleepNight objesi güncellenir bu yüzden bu değişim gözlemlenmelidir.
+     */
+    private var tonight = MutableLiveData<SleepNight?>()
+
 
     init {
         // ViewModel created durumunda bu metod çalışacak
         initializeTonight()
     }
 
-    private val nights = database.getAllNights()
-
-    val nightsString = Transformations.map(nights) { nights ->
-        formatNights(nights, application.resources)
-    }
-
-
-    // 1. Adm
-    // Coroutine ' nin yapacağı işi yönetebilmek adına oluşturduk.
-    // Çünkü Koroinin bir işi vardır ve bu iş buradan yönetilecek
-    private var viewModelJob = Job()
-    // İlgili koroin nerede çalışacak ViewModel ' da çalışacağı için ViewModel ' da UI ' a bağlı.
-    private val uiScope = CoroutineScope(Dispatchers.Main + viewModelJob)
-
-    /**
-     * Logic şu şekilde işler. Kullanıcı start düğmesine tıkladığında
-     * SleepNight nesnesi oluşturulur daha sonra stop düğmesi gözlemlenir eğer tıklanırsa
-     * Bu nesnenin ilgili gece verisi günclellenir bu yüzden bu değişim gözlemlenmelidir.
-     */
-    private var tonight = MutableLiveData<SleepNight?>()
-
-
-    // ViewModel ölünce Coroutine ' de ki işlerde ölsün. MemoryLeak yaşanmasın.
-    override fun onCleared() {
-        super.onCleared()
-        viewModelJob.cancel()
-    }
 
     private fun initializeTonight() {
         // İlgili metod içerisinde belirlenen scope içerisinde coroutines başlatılacak
@@ -84,9 +94,11 @@ class SleepTrackerViewModel(
             }
             night
         }
+
+
     }
 
-
+    // Start Butonuna tıklandığında çalışacak metod
     fun onStartTracking() {
         uiScope.launch {
             val newNight = SleepNight()
@@ -96,18 +108,19 @@ class SleepTrackerViewModel(
     }
 
     private suspend fun insert(night: SleepNight) {
-
         withContext(Dispatchers.IO) {
             database.insert(night)
         }
 
     }
 
+    // Stop Butonuna tıklandığında çalışacak metod
     fun onStopTracking() {
         uiScope.launch {
             val oldNight = tonight.value ?: return@launch
             oldNight.stopTimeMilli = System.currentTimeMillis()
             update(oldNight)
+            _navigateToSleepQuality.value = oldNight
         }
     }
 
@@ -117,6 +130,7 @@ class SleepTrackerViewModel(
         }
     }
 
+    // Clear Butonuna tıklandığında çalışacak metod
     fun onClear() {
         uiScope.launch {
             clear()
@@ -130,6 +144,12 @@ class SleepTrackerViewModel(
         }
     }
 
+
+    // ViewModel ölünce Coroutine ' de ki işlerde ölsün. MemoryLeak yaşanmasın.
+    override fun onCleared() {
+        super.onCleared()
+        viewModelJob.cancel()
+    }
 
 }
 
