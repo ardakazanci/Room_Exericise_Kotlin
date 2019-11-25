@@ -43,6 +43,12 @@ class SleepTrackerViewModel(
         _navigateToSleepQuality.value = null
     }
 
+
+    private var _showSnackbarEvent = MutableLiveData<Boolean>()
+
+    val showSnackBarEvent: LiveData<Boolean>
+        get() = _showSnackbarEvent
+
     /**
      * 1. Adm
      * Coroutine ' nin yapacağı işi yönetebilmek adına oluşturduk.
@@ -135,12 +141,14 @@ class SleepTrackerViewModel(
         uiScope.launch {
             clear()
             tonight.value = null
+            _showSnackbarEvent.value = true
         }
     }
 
     suspend fun clear() {
         withContext(Dispatchers.IO) {
             database.clear()
+
         }
     }
 
@@ -151,6 +159,25 @@ class SleepTrackerViewModel(
         viewModelJob.cancel()
     }
 
+    /**
+     * SleepNight nesnesi aracılığıyla Butonların aktiflik durumunu kontrol edeceğiz.
+     */
+
+
+    val startButtonVisible = Transformations.map(tonight) {
+        it == null
+    }
+    val stopButtonVisible = Transformations.map(tonight) {
+        it != null
+    }
+    val clearButtonVisible = Transformations.map(nights) {
+        it?.isNotEmpty() // Bu durum gerçekleşiyorsa enabled durumu şekillenecek.
+    }
+
+
+    fun doneShowingSnackbar() {
+        _showSnackbarEvent.value = false
+    }
 }
 
 
